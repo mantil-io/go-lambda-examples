@@ -12,9 +12,6 @@ invoke.sh is example of how to run this new Lambda function. Payload parameter i
 This function is not exposed through API Gateway, doesn't have any integrations so the only way to invoke it is through console or cli/sdk call. 
 
 
-handler/main.go is code from AWS Lambda function handler [example](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html)
-
-
 # Terraform
 
 Ensure that functions.zip exists in the handler folder by running build.sh in handler:
