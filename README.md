@@ -14,3 +14,14 @@ This function is not exposed throught API Gateway, doesn't have any integrations
 
 handler/main.go is code from AWS Lambda function handler [example](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html)
 
+
+# Terraform
+
+./build.sh
+
+terraform init
+terraform apply --auto-approve
+
+../handler/invoke.sh  $(terraform output --raw function_name)
+
+terraform destroy --auto-approve
