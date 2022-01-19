@@ -11,3 +11,6 @@ aws iam detach-role-policy \
     --role-name "$role_name" \
     --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 aws iam delete-role --role-name "$role_name"
+
+echo "=> remove cloudwatch logs"
+aws logs delete-log-group --log-group-name /aws/lambda/$function_name

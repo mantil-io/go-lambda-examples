@@ -4,4 +4,4 @@ echo "=> build"
 GOOS=linux GOARCH=arm64 go build -o bootstrap
 
 echo "=> create deployment package"
-zip function.zip bootstrap
+zip function.zip bootstrap $@
