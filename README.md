@@ -36,7 +36,6 @@ export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_DEFAULT_REGION=us-east-1
 ```
-
 of course change this demo values with your access key, secret key and AWS
 region which is closest to you. We will use Graviton2 (ARM) powered Lambda
 functions, so you need to chose one of the regions where it is
@@ -51,19 +50,17 @@ aws sts get-caller-identity --output table --no-cli-pager
 ```
 This should return Account, Arn and UserId of the AWS user for which you set access credentials.
 
-<!--
-``` sh
-aws ec2 describe-regions --output json --no-cli-pager | jq ".Regions[].RegionName" -r
-```
--->
-
 ## About Go code 
 
-In the handler folder is dummy Lambda function handler. That is unmodified copy of the code from AWS [docs](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html). 
+In the handler folder is dummy Lambda function handler. That is unmodified copy
+of the code from AWS
+[docs](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html). Lambda
+package provides all the plumbing with Lambda execution runtime. It uses [reflection](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L87) to analyze provided handler, performs JSON  [deserialization](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L115) of the payload and [serialization](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L29) of the response.
 
-<!---->
-Each Lambda function request will enter HandleRequest method. Package lambda 
--->
+We need to implemnt handler (HandleRequest function in the example) which must satisfy this [rules](https://github.com/aws/aws-lambda-go/blob/0462b0000e7468bdc8a9c456273c1551fab284aa/lambda/entry.go#L16).
+
+<!----> Each Lambda function request will enter HandleRequest method. Package
+lambda -->
 
 
 ## AWS CLI
@@ -421,7 +418,7 @@ cd ..
 cd terraform
 ```
 
-Be sure to have set `AWS_REGION` environment variable before running terraform. For example:
+Be sure to have set `AWS_DEFAULT_REGION` environment variable before running terraform. For example:
 
 ``` shell
 export AWS_REGION=eu-central-1
