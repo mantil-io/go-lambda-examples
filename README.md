@@ -1,4 +1,4 @@
-# Dummy guide to serverless for Go developers
+## Dummy guide to serverless for Go developers
 
 Purpose of this project is to give you a feeling of Lambda function programming
 in Go. It assumes that you don't have any previous knowledge of AWS or
@@ -15,7 +15,7 @@ specify desired end state of the infrastructure.
 At the end we will clanup all the created resource to leave you AWS account in
 the state before playing with this guide.
 
-# Toolset
+## Toolset
 
 For those who are on OSX and are using Homebrew getting required tools is one liner:
 ``` sh
@@ -25,7 +25,7 @@ in the root of this repo. Of course I expect that you first clone this repo.
 
 For other OS-es install somehow [Go](https://go.dev/doc/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [jq](https://stedolan.github.io/jq/) and [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 
-# AWS Credentials
+## AWS Credentials
 
 You will need an [AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) and [access keys](https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/) for an user in that account.
 
@@ -57,7 +57,7 @@ aws ec2 describe-regions --output json --no-cli-pager | jq ".Regions[].RegionNam
 ```
 -->
 
-# About Go code 
+## About Go code 
 
 In the handler folder is dummy Lambda function handler. That is unmodified copy of the code from AWS [docs](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html). 
 
@@ -66,9 +66,9 @@ Each Lambda function request will enter HandleRequest method. Package lambda
 -->
 
 
-# AWS CLI
+## AWS CLI
 
-## Create Lambda function
+### Create Lambda function
 
 Lets create a Lambda function using AWS command line interface.
 
@@ -290,7 +290,7 @@ S3 location where the package is located. In line 31 we specify that
 architecture for the function (arm64 or x86_64).
  
 
-## Invoke Lambda function
+### Invoke Lambda function
 
 Run the _invoke.sh_ script from the _scripts_ folder:
 
@@ -330,7 +330,7 @@ at the end of the script.
 ```
 You can play with changing payload attribute to get different results.
 
-## View Lambda function logs
+### View Lambda function logs
 
 Run: 
 
@@ -380,7 +380,7 @@ This logs are showing only Lambda execution environment stats. Put some
 `log.Printf(...)` lines into the handler code and you will find them into the
 logs. Any output from the handler binary will be available into Cloudwatch logs
 
-## Cleanup
+### Cleanup
 
 To remove Lambda function and other created resources (role and logs) in the AWS
 account run cleanup script:
@@ -404,9 +404,9 @@ invoke.sh is example of how to run this new Lambda function. Payload parameter i
 This function is not exposed through API Gateway, doesn't have any integrations so the only way to invoke it is through console or cli/sdk call. 
 -->
 
-# Terraform
+## Terraform
 
-## Create infrastructure
+### Create infrastructure
 
 Again position yourself into _handler_ folder. Use _build.sh_ to create Lambda
 deployment package _function.zip_ there:
@@ -433,7 +433,7 @@ terraform init
 terraform apply --auto-approve
 ```
 
-## Execute function
+### Execute function
 
 ``` sh
 ./scripts/invoke.sh $(terraform output --raw function_name)
@@ -442,7 +442,7 @@ terraform apply --auto-approve
 `$(terraform output --raw function_name)` part here is to read *function_name*
 from the terraform state.
 
-## Explore terraform configuration
+### Explore terraform configuration
 
 This guide is not intended to be a terraform manual. We will explore terraform
 configuration just to get sense of this declarative approach of building
@@ -514,7 +514,7 @@ runtime on which function is based (runtime) and architecture. Handler is fixed
 to the _bootstrap_ for provided.al2 runtime.  
 Lines 40-46 defines output variables. We can view them with `terraform output` command. 
 
-## Cleanup
+### Cleanup
 
 To remove all resources created in apply run: 
 ``` shell
