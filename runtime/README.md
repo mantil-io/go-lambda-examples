@@ -94,21 +94,21 @@ To remove all created resources from your AWS account run *cleanup.sh*:
 ../scripts/cleanup.sh go-runtime-example
 ``` 
 
-## Code walk-trough
+## Code walk-through
 
-Let's explore Go code to see how is it working in practice. [main.go](main.go) in this project is all the code needed for building basic Lambda runtime. You can see from imports [L3-L10](main.go#L3-L10) that we are depending only on the code from Go standard library.
+Let's explore Go code to see how is it working in practice. [main.go](main.go) in this project is all the code needed for building basic Lambda function and runtime. You can see from imports [L3-L10](main.go#L3-L10) that we are depending only on the code from Go standard library.
 
-Like any another Go executable we have `func main` [L17-L18](main.go#L17-L18) which is really simple. It starts *runtime* and passes *function* to the runtime. I'm using here *runtime* and *function* as names for Go funcs to describe meaning. Runtime is glue between Lambda execution environment and our function. Runtime is same for all Lambdas we will write. Function is code specific to this Lambda. 
+Like any another Go executable we have `func main` [L17-L19](main.go#L17-L19) which is really simple. It starts *runtime* and passes *function* to the runtime. I'm using here *runtime* and *function* as names for Go funcs to describe meaning. Runtime is glue between Lambda execution environment and our code. Runtime is same for all Lambdas we will write. Function is code specific to this Lambda. 
 
-In this example *function* [L21-L24](main.go#L21-L24)  is trivial; just returns what it receives. 
+In this example *function* [L21-L24](main.go#L21-L24) is trivial; just returns what it receives. 
 
-*Runtime* func [L26-L39](main.go#L26-L39) is the most interesting part. Shows how to do integration with Lambda runtime API. First we read environment variable `AWS_LAMBDA_RUNTIME_API` [L27](main.go#L27) in which is address of the Runtime API HTTP endpoint. Currently value is `127.0.0.1:9001`. In _nextURL_ [L28](main.go#L28) we prepare address for the *next* request. And then we enter endless loop. 
+*Runtime* func [L26-L39](main.go#L26-L39) is the most interesting part. Shows how to do integration with Lambda runtime API. First we read environment variable `AWS_LAMBDA_RUNTIME_API` [L27](main.go#L27) in which is address of the runtime API HTTP endpoint. Currently value is `127.0.0.1:9001`. In _nextURL_ [L28](main.go#L28) we prepare address for the *next* request. And then we enter endless loop. 
 
-This loop is the heart of the Lambda runtime. We first make get request to the nextURL [L31](main.go#L31). Func *next* [L41-L55](main.go#L41-L55) makes HTTP GET request, reads response body, and returns body and the HTTP headers. That call is blocked and our code is frozen in [L42](main.go#L42) until Lambda is invoked. 
+This loop is the heart of the runtime. We first make get request to the *nextURL* [L31](main.go#L31). Func *next* [L41-L55](main.go#L41-L55) makes HTTP GET request, reads response body, and returns body and the HTTP headers. That call is blocked and our code is frozen in [L42](main.go#L42) until Lambda is invoked. 
 
-This is critical part to understand. That is main difference from running Go (or any other) code in non Lambda environment. When Lambda execution environments gets *next* request it freezes process until it has Lambda invocation to push into the runtime. When Lambda is invoked execution environment unfreezes process and responds to *next* request. 
+This is critical part to understand. It is main difference from running Go (or any other) code in non-Lambda environment. When Lambda execution environment gets *next* request it freezes process until it has invocation to push into the runtime. When Lambda is invoked execution environment unfreezes process and responds to *next* request. 
 
-After the invocation *next* completes and we have req and headers [L31](main.go#L31). From the headers we extract requestID [L32](main.go#L32) which is needed for making *response* API call. Runtime than executes handler function [L34](main.go#L34), gets rsp from handler and uses it for the body of HTTP POST to the API *response* endpoint [L57-L65](main.go#L57-65). 
+After the invocation *next* completes and we have req and headers [L31](main.go#L31). From the headers we extract requestID [L32](main.go#L32) which is needed for making *response* API call. Runtime than executes handler function [L34](main.go#L34), gets rsp from handler and uses it for the body of HTTP POST to the API *response* endpoint [L57-L65](main.go#L57-L65). 
 
 Then we go to the next loop cycle. Runtime makes *next* request and blocks there until next invocation. 
 
