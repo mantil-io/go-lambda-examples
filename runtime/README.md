@@ -40,9 +40,11 @@ Execution environment is container which Lambda service starts. It provides API 
 
 RequestID changes with every invocation. It is provided in HTTP header of the *next* response. 
 
-Runtime works in the endless loop. It makes HTTP GET request on the *next* API endpoint. That HTTP request is blocked until Lambda is invoked. During that blocking phase function is frozen. Process is not running, any goroutines are frozen. We are not charged for the time while the runtime is waiting for the *next* response. When Lambda is invoked *next* HTTP finishes and in the body we get invocation payload.   
-*Next* HTTP response has useful [headers](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html). Bare minimum that runtime needs to use is `Lambda-Runtime-Aws-Request-Id` header which is needed for making API *response* call. Next one usefull is `Lambda-Runtime-Deadline-Ms` deadline for the function to finish execution, it will be killed after that point.  
-Runtime executes function with the invocation payload gets response payload which is used to make HTTP POST to the API *response* endpoint. After that API call it enters into new loop cycle; makes *next* request on which is again frozen until Lambda invocation occurs.   
+Runtime works in the endless loop. It makes HTTP GET request on the *next* API endpoint. That HTTP request is blocked until Lambda is invoked. During that blocking phase function is frozen. Process is not running, any goroutines are frozen. We are not charged for the time while the runtime is waiting for the *next* response. When Lambda is invoked *next* HTTP finishes and in the body we get invocation payload.
+
+*Next* HTTP response has useful [headers](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html). Bare minimum that runtime needs to use is `Lambda-Runtime-Aws-Request-Id` header which is needed for making API *response* call. Next one usefull is `Lambda-Runtime-Deadline-Ms` deadline for the function to finish execution, it will be killed after that point.
+
+Runtime executes function with the invocation payload gets response payload which is used to make HTTP POST to the API *response* endpoint. After that API call it enters into new loop cycle; makes *next* request on which is again frozen until Lambda invocation occurs.
 
 ## Running example
 
@@ -110,8 +112,12 @@ After the invocation *next* completes and we have req and headers [L31](main.go#
 
 Then we go to the next loop cycle. Runtime makes *next* request and blocks there until next invocation. 
 
-## Extending with function error handling
+## Extending example runtime
 
-<!--
-https://github.com/mantil-io/go-lambda-examples/blob/master/runtime/main.go#
--->
+Here are some ideas of how to extend this simple example to be more complete Lambda runtime. 
+
+Runtime API has endpoint where it accepts execution error. Runtime can finish the loop by calling `/runtime/invocation/requestId/response` or `/runtime/invocation/requestId/error`. We should allow our *function* to return error and if that is the case pass that to the *error* endpoint. On [this](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html) page under "Invocation error" is described JSON object for packing error data.
+
+On the same [page](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html) under "Next invocation" are described all headers which we get in the *next* API response. Currently we are using only one but more complete example should allow function to get values of that headers and call the function with context which has deadline from `Lambda-Runtime-Deadline-Ms` header.
+
+If we add some code before runtime func call in the main that will be executed only one during the cold start of the execution environment. That is place for making initializations for the things used in function.
