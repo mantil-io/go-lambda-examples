@@ -15,15 +15,15 @@ const (
 )
 
 func main() {
-	loop(handler)
+	runtime(function)
 }
 
-func handler(req []byte) []byte {
+func function(req []byte) []byte {
 	log.Printf("handler: %s", req)
 	return req
 }
 
-func loop(callback func([]byte) []byte) {
+func runtime(handler func([]byte) []byte) {
 	apiRoot := os.Getenv(runtimeAPIEnv)
 	nextURL := fmt.Sprintf("http://%s/2018-06-01/runtime/invocation/next", apiRoot)
 
@@ -31,7 +31,7 @@ func loop(callback func([]byte) []byte) {
 		req, header := next(nextURL)
 		requestID := header.Get(requestIDHeader)
 
-		rsp := callback(req)
+		rsp := handler(req)
 
 		responseURL := fmt.Sprintf("http://%s/2018-06-01/runtime/invocation/%s/response", apiRoot, requestID)
 		response(responseURL, rsp)
