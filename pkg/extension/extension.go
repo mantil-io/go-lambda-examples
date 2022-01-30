@@ -17,15 +17,15 @@ import (
 	"time"
 )
 
-// RegisterResponse is the body of the response for /register
-type RegisterResponse struct {
+// Register is the body of the response for /register
+type Register struct {
 	FunctionName    string `json:"functionName"`
 	FunctionVersion string `json:"functionVersion"`
 	Handler         string `json:"handler"`
 }
 
-// NextEventResponse is the response for /event/next
-type NextEventResponse struct {
+// Event is the response for /event/next
+type Event struct {
 	EventType          EventType `json:"eventType"`
 	DeadlineMs         int64     `json:"deadlineMs"`
 	RequestID          string    `json:"requestId"`
@@ -33,11 +33,11 @@ type NextEventResponse struct {
 	Tracing            Tracing   `json:"tracing"`
 }
 
-func (r *NextEventResponse) Deadline() time.Time {
+func (r *Event) Deadline() time.Time {
 	return time.UnixMilli(r.DeadlineMs)
 }
 
-func (r *NextEventResponse) Timeout() time.Duration {
+func (r *Event) Timeout() time.Duration {
 	return r.Deadline().Sub(time.Now())
 }
 
@@ -65,15 +65,19 @@ const (
 )
 
 type Handler interface {
-	Invoke(*NextEventResponse) error
-	Shutdown(*NextEventResponse) error
+	Init(*Register) error
+	Invoke(*Event) error
+	Shutdown(*Event) error
 }
 
 func Run(handler Handler, events ...EventType) error {
 	cli := NewClient()
-	_, err := cli.Register(events...)
+	rr, err := cli.Register(events...)
 	if err != nil {
 		return err
+	}
+	if err := handler.Init(rr); err != nil {
+		cli.InitError(context.TODO(), err.Error())
 	}
 	return cli.loop(handler)
 }
@@ -138,7 +142,7 @@ func (c *Client) ExtensionID() string { return c.extensionID }
 func (e *Client) Name() string        { return e.extensionName }
 
 // Register will register the extension with the Extensions API
-func (e *Client) Register(events ...EventType) (*RegisterResponse, error) {
+func (e *Client) Register(events ...EventType) (*Register, error) {
 	const action = "/register"
 	url := e.baseURL + action
 	if len(events) == 0 {
@@ -167,7 +171,7 @@ func (e *Client) Register(events ...EventType) (*RegisterResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var res RegisterResponse
+	var res Register
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return nil, err
@@ -177,7 +181,7 @@ func (e *Client) Register(events ...EventType) (*RegisterResponse, error) {
 }
 
 // NextEvent blocks while long polling for the next lambda invoke or shutdown
-func (e *Client) NextEvent(ctx context.Context) (*NextEventResponse, error) {
+func (e *Client) NextEvent(ctx context.Context) (*Event, error) {
 	const action = "/event/next"
 	url := e.baseURL + action
 
@@ -198,7 +202,7 @@ func (e *Client) NextEvent(ctx context.Context) (*NextEventResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := NextEventResponse{}
+	res := Event{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return nil, err

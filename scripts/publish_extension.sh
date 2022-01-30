@@ -4,7 +4,7 @@ function_name="${1:-go-handler-example}"
 extension_name="${2:-go-extension-example}"
 
 echo "=> build"
-GOOS=linux GOARCH=arm64 go build -trimpath -o build/extensions/$extensions_name main.go
+GOOS=linux GOARCH=arm64 go build -trimpath -o build/extensions/$extension_name main.go
 
 cd build
 zip -r extension.zip extensions/

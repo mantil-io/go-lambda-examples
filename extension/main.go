@@ -14,12 +14,17 @@ func main() {
 
 type handler struct{}
 
-func (h *handler) Invoke(evt *extension.NextEventResponse) error {
+func (h *handler) Init(evt *extension.Register) error {
+	log.Printf("extension init %s", pp(evt))
+	return nil
+}
+
+func (h *handler) Invoke(evt *extension.Event) error {
 	log.Printf("extension invoke %s", pp(evt))
 	return nil
 }
 
-func (h *handler) Shutdown(evt *extension.NextEventResponse) error {
+func (h *handler) Shutdown(evt *extension.Event) error {
 	log.Printf("extension shutdown %s", pp(evt))
 	return nil
 }
