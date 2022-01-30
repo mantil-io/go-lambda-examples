@@ -25,26 +25,55 @@ kada callback vrati error
 
 ## Go Lambda Runtime example
 
+<!--
 This is example of most trivial Lambda build in Go. It is not build around [AWS Lambda Go](https://github.com/aws/aws-lambda-go/tree/0462b0000e7468bdc8a9c456273c1551fab284aa) package which provides integration between function and Lambda execution environment. Here is just few lines Go code which demonstrates how Lambda function, runtime and execution environment interacts. The goal of this example is to explain interaction between this parts. 
 
 First lets describe parts of the system. What is function, runtime and execution environment.
 [Here](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-context.html) is visualization of connections between this parts.
+-->
+I will start with describing parts of the system; what is Lambda, execution environment, runtime and function. After that we will concentrate on the runtime part. 
 
-Function is the code that we write when building Lambda. It accepts JSON payload, returns response and optionally an error. Payload needs to be JSON encoded. Response is of `[]byte` type. Function signature in Go is `func handler(payload []byte) ([]byte, error)`.
+First two are provided by the AWS. When build Lambda in Go we need to provide other two; runtime and function. I think that is worth exploring runtime to get deeper understanding of how things are functioning under the hood. So instead of using standard [AWS Lambda Go](https://github.com/aws/aws-lambda-go/tree/0462b0000e7468bdc8a9c456273c1551fab284aa) runtime package we will build our own from scratch.
+
+**Lambda** is whole system. We are pushing our code to the Lambda, setting configuration, sending invocations. Around our code Lambda starts one or many **execution environments**. The execution environment provides a **runtime API** interface for getting invocation events and sending responses. 
+
+**Runtime** is wrapper around our code which connects it to the execution environment. For Go we are starting from [custom runtime](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html). That is tiny Linux container. We need to put an executable into that container. That executable consist of the runtime and our function. Runtime is responsible for the integration with the execution environment runtime API. It is running the function's setup code, reading invocation events from the runtime API. The runtime passes the event data to the function, and posts the response from the function back to runtime API. Integration is established by calling HTTP API endpoint from runtime. That endpoint is injected into container by execution environment. The rest of the example will explore that integration between runtime API and runtime. 
+
+**Function** is the code that we write when building Lambda. It accepts JSON invocation event payload, returns response and optionally an error. Payload needs to be JSON encoded. Response is of `[]byte` type. Function signature in Go is `func handler(payload []byte) ([]byte, error)`.
+
+My whiteboard visualization of this parts:
+![whiteboard](runtime.png)
+ [Here](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-context.html) you can find one by AWS. 
+
+<!--
+When using [Lambda custom runtime](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html) we need to provide our own wrapper. Custom runtime is build by Amazon Linux 2, expects bootstrap executable in the /var/task folder. It will start that executable which then needs to connect to the execution environment. Conection is established by calling HTTP API endpoint from runtime.    
 
 Runtime is wrapper around function which connects it to the Lambda execution environment. When using [Lambda custom runtime](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html) we need to provide our own wrapper. Custom runtime is build by Amazon Linux 2, expects bootstrap executable in the /var/task folder. It will start that executable which then needs to connect to the execution environment. Conection is established by calling HTTP API endpoint from runtime.   
+-->
 
+### Execution environment runtime API
+
+Our runtime is communicating with execution environment runtime API by making HTTP requests to the runtime API endpoint. Runtime API is reachable at the `http://127.0.0.1:9001` address inside container. There are two methods in runtime API *next* and *response*. *Next* is used to get invocation event. *Response* is for sending result after handling invocation request. Inside execution environment those endpoints are reachable at this URL-s:
+
+* next: http://127.0.0.1:9001/2018-06-01/runtime/invocation/next
+* response: http://127.0.0.1:9001/2018-06-01/runtime/invocation/requestID/response
+
+RequestID changes with every invocation. It is provided in HTTP header of the *next* response. 
+ 
+<!--
 Execution environment is container which Lambda service starts. It provides API endpoints for runtime. Here we will use only runtime API endpoint. There are also extensions and logs API endpoints. Runtime API is reachable at the `http://127.0.0.1:9001` address inside container. There are two methods in Runtime API *next* and *response*. *Next* is used to get invocation request. *Response* is for sending result after handling invocation request. Inside execution environment those endpoints are reachable at this URL-s:
 * next: http://127.0.0.1:9001/2018-06-01/runtime/invocation/next
 * response: http://127.0.0.1:9001/2018-06-01/runtime/invocation/requestID/response
 
 RequestID changes with every invocation. It is provided in HTTP header of the *next* response. 
+-->
 
-Runtime works in the endless loop. It makes HTTP GET request on the *next* API endpoint. That HTTP request is blocked until Lambda is invoked. During that blocking phase function is frozen. Process is not running, any goroutines are frozen. We are not charged for the time while the runtime is waiting for the *next* response. When Lambda is invoked *next* HTTP finishes and in the body we get invocation payload.
 
-*Next* HTTP response has useful [headers](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html). Bare minimum that runtime needs to use is `Lambda-Runtime-Aws-Request-Id` header which is needed for making API *response* call. Next one usefull is `Lambda-Runtime-Deadline-Ms` deadline for the function to finish execution, it will be killed after that point.
+Runtime works in the endless loop. It makes HTTP GET request on the *next* API endpoint. That HTTP request is blocked until Lambda is invoked. During that blocking phase whole execution environment is frozen. Process are not running, any goroutines are frozen. We are not charged for the time while the runtime is waiting for the *next* response. When Lambda is invoked *next* HTTP finishes and in the body we get invocation event.
 
-Runtime executes function with the invocation payload gets response payload which is used to make HTTP POST to the API *response* endpoint. After that API call it enters into new loop cycle; makes *next* request on which is again frozen until Lambda invocation occurs.
+*Next* HTTP response has useful [headers](https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html). Bare minimum that runtime needs to read is `Lambda-Runtime-Aws-Request-Id` header which is needed for making API *response* call. Next one usefull is `Lambda-Runtime-Deadline-Ms` which deadline for the function to finish execution, it will be killed after that point.
+
+Runtime executes function with the invocation event gets response payload which is used to make HTTP POST to the API *response* endpoint. After that API call it enters into new loop cycle; makes *next* request on which is again frozen until next Lambda invocation occurs.
 
 ## Running example
 
