@@ -22,6 +22,7 @@ type Register struct {
 	FunctionName    string `json:"functionName"`
 	FunctionVersion string `json:"functionVersion"`
 	Handler         string `json:"handler"`
+	ExtensionID     string
 }
 
 // Event is the response for /event/next
@@ -177,6 +178,7 @@ func (e *Client) Register(events ...EventType) (*Register, error) {
 		return nil, err
 	}
 	e.extensionID = httpRes.Header.Get(extensionIdentiferHeader)
+	res.ExtensionID = e.extensionID
 	return &res, nil
 }
 
