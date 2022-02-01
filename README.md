@@ -1,45 +1,34 @@
-## Dummy guide to serverless for Go developers
+## Dummy guide to AWS Lambda for Go developers - Part 1
 
-Purpose of this project is to give you a feeling of Lambda function programming
-in Go. It assumes that you don't have any previous knowledge of AWS or
-Lambda. We will make only few small steps to start you in this new world. For
-the difference of many other examples we will not use AWS Console or higher level
-serverless tool. We will just create one dummy Lambda function and then execute
-it. We will do that on the two different ways: one using AWS command line
-interface, and in the other we will use terraform for crating AWS resources.
+This multi-part tutorial series aims to give you a feeling of Lambda function programming in Go. It assumes that you don't have previous knowledge of AWS or Lambda. 
 
-It's interesting to see two different approach one is imperative (AWS CLI)
-where we specify each step and the other declarative (terraform) where we
-specify desired end state of the infrastructure.
-
-At the end we will clanup all the created resource to leave you AWS account in
-the state before playing with this guide.
+This is the first part where we will make the few small steps to start you in this new world. For the difference of many other examples, we will not use AWS Console or a higher-level serverless tool. We will create one dummy Lambda function and then execute it. We will do that in two ways: one using AWS command-line interface, and in the other, we will use Terraform to create AWS resources. It's interesting to see two different approaches. One is imperative (AWS CLI), where we specify each step, and the other is declarative (Terraform), where we define the desired end state of the infrastructure.
 
 ## Toolset
 
-For those who are on macOS and are using Homebrew getting required tools is one liner:
+For those who are on macOS and are using Homebrew getting started required tools is a one-liner:
 ``` sh
 brew bundle
 ```
 in the root of this repo. Of course you first need clone this repo.
 
-For other OS-es install somehow [Go](https://go.dev/doc/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [jq](https://stedolan.github.io/jq/) and [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+For other OS-es, you will need to install [Go](https://go.dev/doc/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [jq](https://stedolan.github.io/jq/) and [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 
 ## AWS Credentials
 
-You will need an [AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) and [access keys](https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/) for an user in that account.
+You will need an [AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) and [access keys](https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/) for a user in that account.
 
 
-After you have access key set it as [environment variables](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) in the shell, for example:
+After you have the access key, set it as [environment variables](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) in the shell:
 ``` sh
 export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_DEFAULT_REGION=us-east-1
 ```
-change this demo values with your access key, secret key and AWS
-region which is closest to you. We will use Graviton2 (ARM) powered Lambda
+Change these demo values with your access key, secret key and AWS
+region closest to you. We will use Graviton2 (ARM) powered Lambda
 functions, so you need to chose one of the regions where it is
-[supported](https://aws.amazon.com/blogs/aws/aws-lambda-functions-powered-by-aws-graviton2-processor-run-your-functions-on-arm-and-get-up-to-34-better-price-performance/). Use one of:
+[supported](https://aws.amazon.com/blogs/aws/aws-lambda-functions-powered-by-aws-graviton2-processor-run-your-functions-on-arm-and-get-up-to-34-better-price-performance/):
 
 > US East (N. Virginia), US East (Ohio), US West (Oregon), Europe (Frankfurt), Europe (Ireland), EU (London), Asia Pacific (Mumbai), Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo).
 
@@ -48,17 +37,17 @@ To test connectivity to the AWS account with CLI run:
 ``` sh
 aws sts get-caller-identity --output table --no-cli-pager
 ```
-This should return Account, Arn and UserId of the AWS user for which you set
-access credentials. If this command succeeded you are ready to go.
+This should return Account, Arn and, UserId of the AWS user for which you set
+access credentials. If this command succeeds, you are ready to go.
 
 ## About Go code 
 
-In the handler folder is dummy Lambda function handler. That is unmodified copy
+In the handler folder is a dummy Lambda function handler. That is an unmodified copy
 of the code from AWS
 [docs](https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html). Lambda
 package provides all the plumbing with Lambda execution runtime. It uses [reflection](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L87) to analyze provided handler, performs JSON  [deserialization](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L115) of the payload and [serialization](https://github.com/aws/aws-lambda-go/blob/2e104a66b60ac51aa6d7e494981203da7628426f/lambda/handler.go#L29) of the response.
 
-We need to implemnt handler (HandleRequest function in the example) which must satisfy this [rules](https://github.com/aws/aws-lambda-go/blob/0462b0000e7468bdc8a9c456273c1551fab284aa/lambda/entry.go#L16).
+Implemented handler (HandleRequest function in the example) must satisfy these [rules](https://github.com/aws/aws-lambda-go/blob/0462b0000e7468bdc8a9c456273c1551fab284aa/lambda/entry.go#L16).
 
 
 ## AWS CLI
@@ -74,7 +63,7 @@ cd handler
 ../scripts/publish.sh
 ```
 
-Expected output is something like this:
+The expected output is something like this:
 ``` sh
 => build
 => create deployment package
@@ -129,7 +118,7 @@ Expected output is something like this:
 }
 ```
 
-Let's look inside the script and expain waht is happening. This is _publish.sh_ script:
+Let's look inside the script and expain what is happening. This is _publish.sh_ script:
 
 ``` shell
  1 #!/usr/bin/env bash -e
@@ -159,16 +148,16 @@ Let's look inside the script and expain waht is happening. This is _publish.sh_ 
 25 rm function.zip bootstrap
 ```
 
-I don't assume any previous knowledge of the shell scripting so we will look
-into this script line by line. Script accepts Lambda function name as first
-parameter if not supplied _go-handler-example_ will be used as default. Line 4
-is where this happens; uses first argument or default for setting variable
+I don't assume any previous knowledge of the shell scripting, so we will look
+into this script line by line. The script accepts the Lambda function name as the first
+parameter; if not supplied, _go-handler-example_ will be used as default. Line 4
+is where this happens; it uses the first argument or default for setting variable
 *function_name*. If you don't want default function name run the script like
 `../scripts/publish.sh my-lambda-function-name`.  
 Line 7 gets the folder where _publish.sh_ is located. We will call the other
 scripts (deploy.sh, create_function.sh) from this one so we grab that path and
 store it into _scripts_ variable.  
-In line 10 we are calling _build.sh_ which will prepare Lambda function
+In line 10, we call _build.sh_, which will prepare Lambda function
 deployment package. Lets look into _build.sh_:
 
 ``` shell
@@ -185,30 +174,28 @@ Line 4 is go build command. We are building for Linux arm64 platform. Lambda
 functions can be run on either Intel on AWS Graviton2 processors. Use Graviton
 to get [lower price and better
 performance](https://aws.amazon.com/blogs/aws/aws-lambda-functions-powered-by-aws-graviton2-processor-run-your-functions-on-arm-and-get-up-to-34-better-price-performance/)
-unless some requirement pull you back.  
-Resulting binary is named bootstrap. That is requirement of the Lambda runtime
-provided.al2 which we will use for building Lambda function. That runtime is
-tiny Linux instance based on Amazon Linux 2, when started it will execute
-bootstrap binary. That bootstrap name is requirement of the provided.al2
-runtime.
+unless some requirements pull you back.  
+The resulting binary is named bootstrap. That is a requirement of the Lambda runtime
+provided.al2, which we will use for building the Lambda function. That runtime is
+a tiny Linux instance based on Amazon Linux 2; it will execute the bootstrap binary when started. Again, that bootstrap name is a requirement of the provided.al2 runtime.
 
 Line 7 creates _function.zip_ file with bootstrap file in it. That zip file is
 the Lambda deployment package accepted by CLI commands, AWS Console or any other
-tool from which you can create Lambda function. `$@` at the end of the zip
-command is here to enable you to add any other files to the package. You can for
-example with `../scripts/build.sh config.yml` add a config file to the
-package. That file will be available when running Lambda function in the same
+tool from which you can create the Lambda function. `$@` at the end of the zip
+command is here to enable you to add any other files to the package. So you can, for
+example, with `../scripts/build.sh config.yml` add a config file to the
+package. That file will be available when running the Lambda function in the same
 folder as the binary.
 
-After the build phase we have _function.zip_ file in the _handler_ folder. So
+After the build phase, we have _function.zip_ file in the _handler_ folder. So
 let's return to the publish script.
 
-Line 13 check whether the Lambda function with the name from variable
+Line 13 checks whether the Lambda function with the name from variable
 *function_name* already exists. `aws lambda get-function --function-name
 $function_name` returns function configuration, but here we are checking only
 the result. Whether it was successful or not. If it was successful that function
-already exists and we will just update function code if not we will call another
-script *create_function.sh*. Let's examine process of creating new Lambda
+already exists, and we will just update the function code. If not, we will call another
+script *create_function.sh*. Let's examine the process of creating a new Lambda
 function:
 
 ``` shell
@@ -247,31 +234,31 @@ function:
 33 done
 ```
 
-From line 5 to line 19 is the process of creating [Lambda execution
+From line 5 to line 19 is the process of creating the [Lambda execution
 role](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html).
-We need that role in the line 29 for actually creating Lambda function. I will
-skip details of the IAM, policy, role story, it is necessary to give your function
-permission on other AWS resources but that is separate topic. Just note that in
-line 17 we give our Lambda function AWSLambdaBasicExecutionRole which gives that
-function permission to upload logs to Cloudwatch and nothing more.
+We need that role in line 29 for actually creating the Lambda function. I will
+skip details of the IAM, policy, role story... It is necessary to give your function
+permission on other AWS resources, but that is a separate topic. Just note that in
+line 17, we give our Lambda function AWSLambdaBasicExecutionRole, which provides that
+function with permission to upload logs to Cloudwatch and nothing more.
 
-For loop in lines 23,24 and `&& break` part in the end of the create-function
-command (line 25) is here to give us few retries for *create-function* command.
-When we create new role it is not immediately visible by new Lambda functions so
-*create-function* command can fail with error: `An error occurred
+Loop in lines 23, 24 and `&& break` part at the end of the create-function
+command (line 25) gives us a few retries for *create-function* command.
+When we create a new role, it is not immediately visible by new Lambda functions, so
+*create-function* command can fail with an error: `An error occurred
 (InvalidParameterValueException) when calling the CreateFunction operation: The
-role defined for the function cannot be assumed by Lambda.` Script waits 5
-seconds before first try and then makes few more tries each after 1 second.
+role defined for the function cannot be assumed by Lambda.` The script waits 5
+seconds before the first try and then makes a few more tries each after 1 second.
 
-Line 25 is actual
+Line 25 is the actual
 [create-function](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html)
-AWS CLI command. We are providing function name (line 26), runtime on which
-Lambda function will be build (line 27). This is Go application so we use
+AWS CLI command. We provide the function name (line 26), runtime on which
+Lambda function will be build (line 27). This is a Go application, so we use
 provided.al2 runtime. There are
 [runtimes](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html)
-for other languages. In line 28 we give our _function.zip_ as content for the
+for other languages. In line 28, we give our _function.zip_ as content for the
 new Lambda. Other useful option is to instead of using local file to specify S3
-location where the package is located. In line 31 we specify architecture for
+location where the package is located. In line 31, we specify architecture for
 the function (arm64 or x86_64).
  
 ### Invoke Lambda function
@@ -281,7 +268,7 @@ Run the _invoke.sh_ script from the _scripts_ folder:
 ../scripts/invoke.sh
 ```
 
-expected output is:
+The expected output is:
 ``` shell
 {
     "StatusCode": 200,
@@ -289,7 +276,7 @@ expected output is:
 }
 "Hello Foo!"
 ```
-and the _invoke.sh_ is:
+And the _invoke.sh_ is:
 ``` shell
  1 #!/usr/bin/env bash -e
  2 
@@ -307,9 +294,9 @@ and the _invoke.sh_ is:
 
 Script uses [lambda
 invoke](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/invoke.html)
-CLI command. Line 6 specifies function and line 9 JSON payload. In this case we
-are sending `{"name":"Foo"}` JSON. This command writes response to the file. So
-we provide file, show response content `cat response.json` and remove that file
+CLI command. Line 6 specifies a function and line 9 JSON payload. In this case we
+are sending `{"name":"Foo"}` JSON. This command writes a response to the file. So
+we provide a file, show response content `cat response.json` and remove that file
 at the end of the script.
 
 You can play by changing payload attribute to get different results.
@@ -321,7 +308,7 @@ Run:
 ../scripts/logs.sh
 ```
 
-expected output is something like:
+The expected output is something like:
 ``` shell
 last stream name: 2022/01/20/[$LATEST]7b576140275c4b4d9aee7288717766c3
 1642696161536   START RequestId: 65da5fff-aea9-4d67-8366-499d3942adf7 Version: $LATEST\n
@@ -347,26 +334,26 @@ _logs.sh_ script:
 ```
 
 Here we are showing lambda function logs from the AWS Cloudwatch service. By
-default Lambda function is sending logs to the Cloudwatch service. Cloudwatch is
+default, the Lambda function sends logs to the Cloudwatch service. Cloudwatch is
 organized into log groups and log streams. Each lambda function gets a log group
-named `/aws/lambda/[function-name]`. Into that group each Lambda initialization
-creates new log stream. Function initialization is happening on
-first invoke after that execution environment lives some time.  
-This scripts finds last stream name for our function log group and then lists
+named `/aws/lambda/[function-name]`. Into that group, each Lambda initialization
+creates a new log stream. Function initialization happens on
+first invoke after that execution environment lives for some time.  
+This scripts finds the last stream name for our function log group and then lists
 logs in that stream. Line 6 executes *describe-log-streams* which list all log
 streams in the log group in JSON array. We use jq tool here to select only
 *logStreamName* attribute, `tail -n 1` returns last line from the list of
 all streams. Now when we have *stream_name* we can call get-log-events for that
-stream in line 10. Again we use jq to reformat JSON into table.
+stream in line 10. Again we use jq to reformat JSON into the table.
 
-This logs are showing only Lambda execution environment stats. Put some
-`log.Printf(...)` lines into the handler Go code and you will find them into the
-logs. Any output from the handler binary will be available into Cloudwatch logs
+These logs show only Lambda execution environment stats. Put some
+`log.Printf(...)` lines into the handler Go code, and you will find them into the
+logs. Any output from the handler binary will be available in Cloudwatch logs.
 
 ### Cleanup
 
 To remove Lambda function and other created resources (role and logs) in the AWS
-account run cleanup script:
+account, run the cleanup script:
 
 ``` shell
 ../scripts/cleanup.sh
@@ -376,7 +363,7 @@ account run cleanup script:
 
 ### Create infrastructure
 
-Again position yourself into _handler_ folder. Use _build.sh_ to create Lambda
+Again position yourself into the _handler_ folder. Use _build.sh_ to create Lambda
 deployment package _function.zip_ there:
 ``` sh
 ../scripts/build.sh
@@ -405,13 +392,13 @@ terraform apply --auto-approve
 ./scripts/invoke.sh $(terraform output --raw function_name)
 ```
 
-`$(terraform output --raw function_name)` part here is to read *function_name*
+Here, the `$(terraform output --raw function_name)` part is to read *function_name*
 from the terraform state.
 
 ### Explore terraform configuration
 
-This guide is not intended to be a terraform manual. We will explore terraform
-configuration just to get sense of this declarative approach of building
+This guide is not intended to be a terraform manual. We will just explore terraform
+configuration to get a sense of this declarative approach to building
 infrastructure.
 
 ``` hcl
@@ -463,22 +450,22 @@ infrastructure.
 46 }
 ```
 
-First five lines defines where terraform will save its state. The simplest
-method is to use local filesystem. State will be saved into the _.state_ folder
+The first five lines define where terraform will save its state. The simplest
+method is to use a local filesystem. State will be saved into the _.state_ folder
 into _terraform_ folder (where main.tf is located).  
 In 7-10 we define function name as variable. You can [change
 that](https://www.terraform.io/language/values/variables#variables-on-the-command-line)
 in apply for example: `terraform apply --var="function_name=my-function-name"
 --auto-approve`.  
 Lines 14-29 will create IAM role for the Lambda function. It is referenced in
-line 32 when creating Lambda function. By this reference terraform knows that it
-first needs to create role resource because lambda function resource depends on
+line 32 when creating Lambda function. With this reference terraform knows that it
+first needs to create role resource because lambda function resource depends on the
 role.  
-Lines 31-38 are actual function creation. Again we provide same information like
-in CLI; function_name, zip file with Lambda deployment package (filename),
+Lines 31-38 are actual function creation. Again we provide the same information like
+in CLI; function_name, a zip file with Lambda deployment package (filename),
 runtime on which function is based (runtime) and architecture. Handler is fixed
 to the _bootstrap_ for provided.al2 runtime.  
-Lines 40-46 defines output variables. We can view them with `terraform output` command. 
+Lines 40-46 define output variables. We can view them with `terraform output` command. 
 
 ### Cleanup
 
@@ -486,4 +473,8 @@ To remove all resources created in apply run:
 ``` shell
 terraform destroy --auto-approve
 ```
+
+## Conclusion
+Congratulations! Now you know how to build the AWS Lambda function in Go, both via AWS CLI and Terraform. Thanks for following this tutorial.
+In the next part of this serverless series, I will break down how to set up an API Gateway and enable public access to created Lambda function.
 
