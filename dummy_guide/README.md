@@ -60,7 +60,7 @@ from the scripts folder:
 
 ``` sh
 cd handler
-../scripts/publish.sh
+../../scripts/publish.sh
 ```
 
 The expected output is something like this:
@@ -153,7 +153,7 @@ into this script line by line. The script accepts the Lambda function name as th
 parameter; if not supplied, _go-handler-example_ will be used as default. Line 4
 is where this happens; it uses the first argument or default for setting variable
 *function_name*. If you don't want default function name run the script like
-`../scripts/publish.sh my-lambda-function-name`.  
+`../../scripts/publish.sh my-lambda-function-name`.  
 Line 7 gets the folder where _publish.sh_ is located. We will call the other
 scripts (deploy.sh, create_function.sh) from this one so we grab that path and
 store it into _scripts_ variable.  
@@ -183,7 +183,7 @@ Line 7 creates _function.zip_ file with bootstrap file in it. That zip file is
 the Lambda deployment package accepted by CLI commands, AWS Console or any other
 tool from which you can create the Lambda function. `$@` at the end of the zip
 command is here to enable you to add any other files to the package. So you can, for
-example, with `../scripts/build.sh config.yml` add a config file to the
+example, with `../../scripts/build.sh config.yml` add a config file to the
 package. That file will be available when running the Lambda function in the same
 folder as the binary.
 
@@ -265,7 +265,7 @@ the function (arm64 or x86_64).
 
 Run the _invoke.sh_ script from the _scripts_ folder:
 ``` sh
-../scripts/invoke.sh
+../../scripts/invoke.sh
 ```
 
 The expected output is:
@@ -305,7 +305,7 @@ You can play by changing payload attribute to get different results.
 
 Run: 
 ``` shell
-../scripts/logs.sh
+../../scripts/logs.sh
 ```
 
 The expected output is something like:
@@ -356,7 +356,7 @@ To remove Lambda function and other created resources (role and logs) in the AWS
 account, run the cleanup script:
 
 ``` shell
-../scripts/cleanup.sh
+../../scripts/cleanup.sh
 ```
 
 ## Terraform
@@ -366,7 +366,7 @@ account, run the cleanup script:
 Again position yourself into the _handler_ folder. Use _build.sh_ to create Lambda
 deployment package _function.zip_ there:
 ``` sh
-../scripts/build.sh
+../../scripts/build.sh
 ```
 
 Then switch to the _terraform_ folder:
