@@ -389,7 +389,7 @@ terraform apply --auto-approve
 ### Execute function
 
 ``` sh
-./scripts/invoke.sh $(terraform output --raw function_name)
+../../scripts/invoke.sh $(terraform output --raw function_name)
 ```
 
 Here, the `$(terraform output --raw function_name)` part is to read *function_name*
