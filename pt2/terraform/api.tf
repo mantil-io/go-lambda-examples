@@ -24,6 +24,7 @@ resource "aws_apigatewayv2_stage" "default" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.access_logs.arn
     # using default format
+    # ref: https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging-variables.html
     format = jsonencode({
       httpMethod     = "$context.httpMethod"
       ip             = "$context.identity.sourceIp"

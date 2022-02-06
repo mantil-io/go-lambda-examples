@@ -31,7 +31,7 @@ func v2Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.
 	log.Printf("request path: %s body: %s", req.RawPath, req.Body)
 
 	lc, _ := lambdacontext.FromContext(ctx)
-	body := fmt.Sprintf("Hello from v2, %s", lc.InvokedFunctionArn)
+	body := fmt.Sprintf("Hello from  %s", lc.InvokedFunctionArn)
 
 	var rsp events.APIGatewayV2HTTPResponse
 	rsp.StatusCode = http.StatusOK
