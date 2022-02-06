@@ -1,3 +1,5 @@
+# define new API Gateway
+# ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api
 resource "aws_apigatewayv2_api" "http" {
   name          = "${var.project_name}-http"
   protocol_type = "HTTP"
@@ -6,21 +8,36 @@ resource "aws_apigatewayv2_api" "http" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "http_access_logs" {
+# create CloudWatch group for the API Gateway access logs
+# ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
+resource "aws_cloudwatch_log_group" "access_logs" {
   name              = "/aws/vendedlogs/${aws_apigatewayv2_api.http.name}-access-logs"
   retention_in_days = 14
 }
 
-resource "aws_apigatewayv2_stage" "http_default" {
-  name          = "$default"
-  api_id        = aws_apigatewayv2_api.http.id
-  deployment_id = aws_apigatewayv2_deployment.http.id
-
+# create API Gateway stage: https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-stages.html
+# ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_stage
+resource "aws_apigatewayv2_stage" "default" {
+  name        = "$default"
+  api_id      = aws_apigatewayv2_api.http.id
+  auto_deploy = true
   access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.http_access_logs.arn
-    format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\",\"routeKey\":\"$context.routeKey\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
+    destination_arn = aws_cloudwatch_log_group.access_logs.arn
+    # using default format
+    format = jsonencode({
+      httpMethod     = "$context.httpMethod"
+      ip             = "$context.identity.sourceIp"
+      protocol       = "$context.protocol"
+      requestId      = "$context.requestId"
+      requestTime    = "$context.requestTime"
+      responseLength = "$context.responseLength"
+      routeKey       = "$context.routeKey"
+      status         = "$context.status"
+    })
   }
-
+  # we need to set something for throttling, limits will be 0 by default
+  # ref: https://github.com/hashicorp/terraform-provider-aws/issues/14742
+  # using account limits for the throttling limits
   default_route_settings {
     detailed_metrics_enabled = true
     throttling_burst_limit   = 5000
@@ -28,40 +45,26 @@ resource "aws_apigatewayv2_stage" "http_default" {
   }
 }
 
-resource "aws_apigatewayv2_route" "http_proxy" {
+# connect API Gateway to the Lambda function
+# ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration
+resource "aws_apigatewayv2_integration" "proxy" {
+  api_id                 = aws_apigatewayv2_api.http.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  payload_format_version = "2.0"
+  integration_uri        = aws_lambda_function.fn.invoke_arn
+}
+
+# expose Lambda function at some route
+# ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route
+resource "aws_apigatewayv2_route" "route" {
   api_id    = aws_apigatewayv2_api.http.id
-  route_key = "ANY /${var.route}/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.http_proxy.id}"
+  route_key = "ANY /${var.route}"
+  target    = "integrations/${aws_apigatewayv2_integration.proxy.id}"
 }
 
-resource "aws_apigatewayv2_integration" "http_proxy" {
-  api_id             = aws_apigatewayv2_api.http.id
-  integration_type   = "AWS_PROXY" #each.value.type
-  integration_method = "POST"      #each.value.integration_method
-  integration_uri    = aws_lambda_function.fn.invoke_arn
-  #TODO: ???
-  request_parameters = {
-    "overwrite:path" = "$request.path.proxy"
-  }
-}
-
-resource "aws_apigatewayv2_deployment" "http" {
-  api_id = aws_apigatewayv2_api.http.id
-  depends_on = [
-    aws_apigatewayv2_integration.http_proxy,
-    aws_apigatewayv2_route.http_proxy,
-  ]
-  triggers = {
-    redeployment = sha1(join(",", tolist([
-      jsonencode(aws_apigatewayv2_integration.http_proxy),
-      jsonencode(aws_apigatewayv2_route.http_proxy),
-    ])))
-  }
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
+# give API Gateway permission to call our Lambda function
+#ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission
 resource "aws_lambda_permission" "api_gateway_invoke" {
   function_name = aws_lambda_function.fn.function_name
   action        = "lambda:InvokeFunction"

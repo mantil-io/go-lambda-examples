@@ -33,5 +33,5 @@ output "endpoint" {
 }
 
 output "url" {
-  value = "${aws_apigatewayv2_api.http.api_endpoint}/${var.route}/"
+  value = "${aws_apigatewayv2_api.http.api_endpoint}/${var.route}"
 }
