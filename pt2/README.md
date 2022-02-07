@@ -104,8 +104,71 @@ You can, of course, return than to the apply step and create them again.
 
 ## Go handler code
 
+Handler code is just showing how to extract usefull information from various available sources, and how to return response to the caller. Caller makes HTTP request to the API Gateway endpoint. API Gateway packs that request and makes payload for the function invocation.
 
+We are using HTTP API Gateway [proxy payload](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html) format 2.0 integration type. When we make HTTP request to our endpoint, for example:
 
+``` sh
+curl https://in2keb62qf.execute-api.eu-central-1.amazonaws.com/handler -d "request body"
+```
+<!--
+[handler/main.go](handler/main.go) is a simple Lambda function. We are passing [handler](handler/main.go#56) to the lambda package. It will run our handler on each Lambda function invocation. In this case when function is invoked through HTTP API Gatweay integration we expect *APIGatewayV2HTTPRequest* in the request and we are using *APIGatewayV2HTTPResponse* for response. 
+
+When we invoke our function through HTTP API Gateway with [proxy payload](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html) format 2.0 the payload with wich the function is invoked look like this:
+-->
+
+payload which API Gateway passes to our function looks like this:
+``` json
+{
+    "version": "2.0",
+    "routeKey": "ANY /handler",
+    "requestContext": {
+        "timeEpoch": 1644265482216,
+        "time": "07/Feb/2022:20:24:42 +0000",
+        "stage": "$default",
+        "routeKey": "ANY /handler",
+        "requestId": "NMDxogOhliAEJTg=",
+        "http": {
+            "userAgent": "curl/7.77.0",
+            "sourceIp": "93.140.84.169",
+            "protocol": "HTTP/1.1",
+            "path": "/handler",
+            "method": "POST"
+        },
+        "domainPrefix": "in2keb62qf",
+        "domainName": "in2keb62qf.execute-api.eu-central-1.amazonaws.com",
+        "apiId": "in2keb62qf",
+        "accountId": "123456789012"
+    },
+    "rawQueryString": "",
+    "rawPath": "/handler",
+    "isBase64Encoded": true,
+    "headers": {
+        "x-forwarded-proto": "https",
+        "x-forwarded-port": "443",
+        "x-forwarded-for": "93.140.84.169",
+        "x-amzn-trace-id": "Root=1-6201800a-351c97731d1f143b5094ee4c",
+        "user-agent": "curl/7.77.0",
+        "host": "in2keb62qf.execute-api.eu-central-1.amazonaws.com",
+        "content-type": "application/x-www-form-urlencoded",
+        "content-length": "12",
+        "accept": "*/*"
+    },
+    "body": "cmVxdWVzdCBib2R5"
+}
+```
+
+*aws/aws-lambda-go* package provides Go structs for unpacking this payload type. For the request that is [APIGatewayV2HTTPRequest](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L51-L64) and the response that API Gateway expect is defined in [APIGatewayV2HTTPResponse](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L123-L130). We are using this two types in the signature of our [handler](handler.main.go#L27) function and *lambda** package will handle unmarshal of the request and marshaling of the response.
+
+Code in handler shows how to get request body. We need to [decode](handler/main.go#L64-L73) it from base64. 
+
+Then we show how to get information from Lambda [environment](handler/main.go#L36). Full list of the environment variables can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime). 
+
+Context provided to the function caries execution [deadline](handler/main.go#L42). Function should complete before deadline. 
+
+Runtime request information can be found in the [lambdacontext](handler/main.go#L47). 
+
+At the end we show how to create [response](handler/main.go#L53) for the API Gateway. Status code, body and the headers will be returned to the caller who made a HTTP request to the API Gateway.  
 
 ## Terraform configuration
 
@@ -114,10 +177,10 @@ You can, of course, return than to the apply step and create them again.
 <!--
 znamo da je ovo komplicirano
 all the code you write is only business logic
--->
+
 
 v1:
-``` json
+
 {
     "body": null,
     "headers": {
@@ -199,10 +262,10 @@ v1:
     "stageVariables": null,
     "version": "1.0"
 }
-```
+
 
 v2: 
-``` json
+
 {
     "headers": {
         "accept": "*/*",
@@ -218,16 +281,16 @@ v2:
     "pathParameters": {
         "proxy": "pero"
     },
-    "rawPath": "/handler/pero",
+    "rawPath": "/handler",
     "rawQueryString": "",
     "requestContext": {
-        "accountId": "052548195718",
+        "accountId": "123456789012",
         "apiId": "9pyofn5yi9",
         "domainName": "9pyofn5yi9.execute-api.eu-central-1.amazonaws.com",
         "domainPrefix": "9pyofn5yi9",
         "http": {
             "method": "POST",
-            "path": "/handler/pero",
+            "path": "/handler",
             "protocol": "HTTP/1.1",
             "sourceIp": "93.136.72.29",
             "userAgent": "curl/7.77.0"
@@ -238,8 +301,9 @@ v2:
         "time": "06/Feb/2022:16:10:11 +0000",
         "timeEpoch": 1644163811849
     },
-    "routeKey": "ANY /handler/{proxy+}",
+    "routeKey": "ANY /handler",
     "version": "2.0"
 }
-```
 
+
+-->

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,8 +20,16 @@ const (
 	envLogStreamName = "AWS_LAMBDA_LOG_STREAM_NAME"
 )
 
-func handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	log.Printf("request path: %s body: %s", req.RawPath, req.Body)
+func main() {
+	lambda.Start(handler)
+}
+
+func handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (*events.APIGatewayV2HTTPResponse, error) {
+	reqBody, err := requestBody(req)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("request path: %s body: %s", req.RawPath, reqBody)
 
 	// read information from environment variables
 	// ref: https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime
@@ -49,9 +58,16 @@ func handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 			"LogStreamName": logStreamName,
 		},
 	}
-	return rsp, nil
+	return &rsp, nil
 }
 
-func main() {
-	lambda.Start(handler)
+func requestBody(req events.APIGatewayV2HTTPRequest) (string, error) {
+	if !req.IsBase64Encoded {
+		return req.Body, nil
+	}
+	buf, err := base64.StdEncoding.DecodeString(req.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(buf), nil
 }
