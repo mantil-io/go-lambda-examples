@@ -4,6 +4,8 @@ terraform {
   }
 }
 
+provider "aws" {}
+
 variable "project_name" {
   type    = string
   default = "api-example"
@@ -17,8 +19,6 @@ variable "route" {
 locals {
   function_name = "${var.project_name}-${var.route}"
 }
-
-provider "aws" {}
 
 output "function_name" {
   value = aws_lambda_function.fn.function_name

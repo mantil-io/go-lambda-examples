@@ -1,8 +1,8 @@
 In the first part of this guide we saw how to create simple Lambda function in Go. Here we will exapand that and make our function callable from the internet. We will integrate API Gateway  with a Lambda function on the backend. When a client calls our API, API Gateway sends the request to the Lambda function and returns the function's response to the client.
 
-There are three flawors of API Gateway. First one was REST API it still has most features, HTTP API overlaps with REST in many features. It is more 'modern' implementation. AWS [calims](https://aws.amazon.com/about-aws/whats-new/2019/12/amazon-api-gateway-offers-faster-cheaper-simpler-apis-using-http-apis-preview/) that "HTTP APIs are up to 71% cheaper compared to REST APIs". It is little simplier than REST API. In this example we will use HTTP API. The last API Gateway flawor is WebSocket which enables bidirectional clinet to backend communication. I'll save that for some future example.
+There are three flawors of API Gateway. First one was REST API it still has most features, HTTP API overlaps with REST in many features. It is more 'modern' implementation. AWS [claims](https://aws.amazon.com/about-aws/whats-new/2019/12/amazon-api-gateway-offers-faster-cheaper-simpler-apis-using-http-apis-preview/) that "HTTP APIs are up to 71% cheaper compared to REST APIs". It is little simplier than REST API. In this example we will use HTTP API. The last API Gateway flawor is WebSocket which enables bidirectional clinet to backend communication. I'll save that for some future example.
 
-For running example you will need access to an aws account. If you already walk through [first part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#readme) you are all set. If not take look into [aws credential](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
+For running example you will need access to an aws account. If you already walk through [first part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#readme) you are all set. If not take look into [aws credentials](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
 
 <!--
 https://github.com/mantil-io/go-lambda-examples/tree/master/guide#view-lambda-function-logs
@@ -158,7 +158,7 @@ payload which API Gateway passes to our function looks like this:
 }
 ```
 
-*aws/aws-lambda-go* package provides Go structs for unpacking this payload type. For the request that is [APIGatewayV2HTTPRequest](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L51-L64) and the response that API Gateway expect is defined in [APIGatewayV2HTTPResponse](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L123-L130). We are using this two types in the signature of our [handler](handler.main.go#L27) function and *lambda** package will handle unmarshal of the request and marshaling of the response.
+*aws/aws-lambda-go* package provides Go structs for unpacking this payload. For the request that is [APIGatewayV2HTTPRequest](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L51-L64) and the response that API Gateway expect is defined in [APIGatewayV2HTTPResponse](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L123-L130). We are using this two types in the signature of our [handler](handler.main.go#L27) function and *lambda* package will handle unmarshal of the request and marshaling of the response.
 
 Code in handler shows how to get request body. We need to [decode](handler/main.go#L64-L73) it from base64. 
 
@@ -171,6 +171,18 @@ Runtime request information can be found in the [lambdacontext](handler/main.go#
 At the end we show how to create [response](handler/main.go#L53) for the API Gateway. Status code, body and the headers will be returned to the caller who made a HTTP request to the API Gateway.  
 
 ## Terraform configuration
+
+### function.tf
+
+*function.tf* defines lambda function with the supporting resources. We first careate IAM role and attach [AWSLambdaBasicExecutionRole](terraform/function.tf#L24) which gives function permission to upload logs to CloudWatch. Other common Lambda roles can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html). 
+
+After that we define Cloudwatch [log group](terraform/function.tf#30) for the function. Function can create log group on its own if it don't exists. We create it upfront here to make it part of the terrafrom managed resources. So it will be deleted by terraform on infrastructure destroy.
+
+For building [function](terraform/function.tf#L36-L48) we use deployment package which we prepared in *handler* folder. [source_code_hash](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#source_code_hash) directive will trigger function code update whenever file hash changes.   
+
+### api.tf
+
+
 
 ## The path to the Mantil
 

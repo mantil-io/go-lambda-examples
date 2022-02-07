@@ -27,7 +27,7 @@ resource "aws_iam_role_policy_attachment" "basic" {
 }
 
 # create CloudWatch log group for the function
-resource "aws_cloudwatch_log_group" "function_log_group" {
+resource "aws_cloudwatch_log_group" "fn" {
   name              = "/aws/lambda/${local.function_name}"
   retention_in_days = 14
 }
@@ -41,4 +41,8 @@ resource "aws_lambda_function" "fn" {
   runtime          = "provided.al2"
   handler          = "bootstrap"
   architectures    = ["arm64"]
+  depends_on = [
+    aws_iam_role_policy_attachment.basic,
+    aws_cloudwatch_log_group.fn,
+  ]
 }
