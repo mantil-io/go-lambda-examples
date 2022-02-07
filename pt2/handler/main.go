@@ -28,10 +28,6 @@ func handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 	memorySize := os.Getenv(envMemorySize)
 	log.Printf("max memory size: %s", memorySize)
 	body := fmt.Sprintf("Hello from %s", functionName)
-	// // show all environment vairables in log
-	// for _, l := range os.Environ() {
-	// 	log.Printf("%s", l)
-	// }
 
 	// use context to get execution deadline
 	if deadline, ok := ctx.Deadline(); ok {

@@ -104,6 +104,9 @@ You can, of course, return than to the apply step and create them again.
 
 ## Go handler code
 
+
+
+
 ## Terraform configuration
 
 ## The path to the Mantil
