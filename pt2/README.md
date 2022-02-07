@@ -10,6 +10,28 @@ https://github.com/mantil-io/go-lambda-examples/tree/master/guide#view-lambda-fu
 What is stage
 What is integration
 What is deployment
+
+opisati kakvi su ovo primjeri
+
+kod je ogoljen do esencije
+kod je pripremljen za igranje
+za pocetak experimentiranja 
+za nekog tko bi htio zagnjuriti ali ne zna od kuda krenuti
+
+radi se o primjerima, ne o clancima
+clanak je tu da potkrijepi kod, ali mogao bi ga napisati i kao komentare u kodu
+
+tako da nisam dobar fit onome sto vi zamisljate kao clanak
+taj clanak bez koda ne vrijedi nista
+on je potpora kodu
+
+da bi pisao o tome moram vec imati nekog iskustva
+ne pisaem o temama o kojima nema iskustva
+osim u nekim slucajevima kada zelim nauciti, onda si postavljam pitanja sto bi me sve mogli pitati oni kojima to budem objasnjavao
+zelim nauciti da bi mogao objasniti drugima
+
+destiliram koncepte i kod dok ne ostane samo no sto je esencijalno 
+micem accidental complexiti, zbog projekta, zbog library
 -->
 
 ## Running example
@@ -78,8 +100,18 @@ When you want to remove all created resources run:
 ``` sh
 terraform destroy --auto-approve
 ```
-You can of course return than to the apply step and create them again. 
+You can, of course, return than to the apply step and create them again. 
 
+## Go handler code
+
+## Terraform configuration
+
+## The path to the Mantil
+
+<!--
+znamo da je ovo komplicirano
+all the code you write is only business logic
+-->
 
 v1:
 ``` json

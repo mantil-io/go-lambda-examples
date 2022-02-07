@@ -2,53 +2,60 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
-func v1Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("request path: %s body: %s", req.Path, req.Body)
+const (
+	envFunctionName  = "AWS_LAMBDA_FUNCTION_NAME"
+	envMemorySize    = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+	envLogStreamName = "AWS_LAMBDA_LOG_STREAM_NAME"
+)
 
-	lc, _ := lambdacontext.FromContext(ctx)
-	body := fmt.Sprintf("Hello from, %s", lc.InvokedFunctionArn)
-
-	var rsp events.APIGatewayProxyResponse
-	rsp.StatusCode = http.StatusOK
-	rsp.Body = body
-	headers := make(map[string]string)
-	headers["Access-Control-Allow-Origin"] = "*"
-	rsp.Headers = headers
-	return rsp, nil
-}
-
-func v2Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+func handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	log.Printf("request path: %s body: %s", req.RawPath, req.Body)
 
-	lc, _ := lambdacontext.FromContext(ctx)
-	body := fmt.Sprintf("Hello from  %s", lc.InvokedFunctionArn)
+	// read information from environment variables
+	// ref: https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime
+	functionName := os.Getenv(envFunctionName)
+	memorySize := os.Getenv(envMemorySize)
+	log.Printf("max memory size: %s", memorySize)
+	body := fmt.Sprintf("Hello from %s", functionName)
+	// // show all environment vairables in log
+	// for _, l := range os.Environ() {
+	// 	log.Printf("%s", l)
+	// }
 
-	var rsp events.APIGatewayV2HTTPResponse
-	rsp.StatusCode = http.StatusOK
-	rsp.Body = body
-	headers := make(map[string]string)
-	headers["Access-Control-Allow-Origin"] = "*"
-	rsp.Headers = headers
+	// use context to get execution deadline
+	if deadline, ok := ctx.Deadline(); ok {
+		log.Printf("execution deadline: %v max run duration: %v", deadline, deadline.Sub(time.Now()))
+	}
+
+	// get runtime request ID
+	if lc, ok := lambdacontext.FromContext(ctx); ok {
+		log.Printf("aws request id: %s", lc.AwsRequestID)
+	}
+
+	// build response
+	logStreamName := os.Getenv(envLogStreamName)
+	rsp := events.APIGatewayV2HTTPResponse{
+		StatusCode: http.StatusOK,
+		Body:       body,
+		// set some http response headers
+		Headers: map[string]string{
+			"LogStreamName": logStreamName,
+		},
+	}
 	return rsp, nil
 }
 
 func main() {
-	lambda.Start(v2Handler)
-	//lambda.Start(raw)
-}
-
-func raw(ctx context.Context, req map[string]interface{}) error {
-	buf, _ := json.Marshal(req)
-	fmt.Printf("%s", buf)
-	return nil
+	lambda.Start(handler)
 }
