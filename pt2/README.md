@@ -1,6 +1,6 @@
-In the first part of this guide we saw how to create simple Lambda function in Go. Here we will exapand that and make our function callable from the internet. We will integrate API Gateway  with a Lambda function on the backend. When a client calls our API, API Gateway sends the request to the Lambda function and returns the function's response to the client.
+In the first [part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide) of this guide, we saw how to create a simple Lambda function in Go. Here we will expand that and make our function callable from the internet. We will integrate API Gateway  with a Lambda function on the backend. When a client calls our function URL, API Gateway sends the request to the Lambda function and returns the function's response to the client.
 
-For running example you will need access to an aws account. If you already walk through [first part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#readme) you are all set. If not take look into [aws credentials](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
+For running example you will need access to an AWS account. If you have already walked through the first part you are all set. If not take look into [aws credentials](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
 
 <!--
 https://github.com/mantil-io/go-lambda-examples/tree/master/guide#view-lambda-function-logs
