@@ -1,3 +1,5 @@
+## A guide to AWS Lambda for Go developers  -  Part 2
+
 In the first [part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide) of this guide, we saw how to create a simple Lambda function in Go. Here we will expand that and make our function callable from the internet. We will integrate API Gateway with a Lambda function on the backend. When a client calls our function URL, API Gateway sends the request to the Lambda function and returns the function's response to the client.
 
 For running example, you will need access to an AWS account. If you have already walked through the first part you are all set. If not take look into [aws credentials](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
@@ -34,7 +36,7 @@ micem accidental complexiti, zbog projekta, zbog library
 
 ## Running example
 
-Let's get something working. Then we will explore Go code and Terrafrom configuration. 
+Let's get something working. Then we will explore Go code and terraform configuration. 
 
 From the folder where this readme file is located step into the *handler* folder. It contains a simple Go Lambda function prepared for HTTP API Gateway integration. *build.sh* will create a Lambda function deployment package. It is explained in the first part. 
 
@@ -51,7 +53,7 @@ echo 'plugin_cache_dir="$HOME/.terraform.d/plugin-cache"' > $HOME/.terraformrc
 mkdir -p $HOME/.terraform.d/plugin-cache
 ```
 
-Now move to the terraform folder where we will spend the rest of the time. *terrafrom init* will prepare plugins and download them into *plugin-cache*.
+Now move to the terraform folder where we will spend the rest of the time. *terraform init* will prepare plugins and download them into *plugin-cache*.
 
 ``` sh
 cd ../terraform
@@ -180,7 +182,7 @@ Terraform configuration consists of three files:
 
 In *function.tf* we first careate IAM role and attach [AWSLambdaBasicExecutionRole](terraform/function.tf#L24) which gives function permission to upload logs to CloudWatch. Other common Lambda roles can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html). 
 
-After that we define Cloudwatch [log group](terraform/function.tf#L30-L33) for the function. The function can create a log group on its own if it doesn't exists. We create it upfront here to make it part of the terrafrom managed resources. So it will be deleted by terraform on infrastructure destroy.
+After that we define Cloudwatch [log group](terraform/function.tf#L30-L33) for the function. The function can create a log group on its own if it doesn't exists. We create it upfront here to make it part of the terraform managed resources. So it will be deleted by terraform on infrastructure destroy.
 
 For building [function](terraform/function.tf#L36-L48) we use deployment package which we prepared in *handler* folder. [source_code_hash](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#source_code_hash) directive will trigger function code update whenever file hash changes.
 
