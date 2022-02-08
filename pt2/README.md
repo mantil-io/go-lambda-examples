@@ -156,7 +156,7 @@ payload which API Gateway passes to our function looks like this:
 }
 ```
 
-*aws/aws-lambda-go* package provides Go structs for unpacking this payload. For the request that is [APIGatewayV2HTTPRequest](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L51-L64) and the response that API Gateway expects is defined in [APIGatewayV2HTTPResponse](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L123-L130). We are using these two types in the signature of our [handler](handler.main.go#L27) function and *lambda* package will handle unmarshal of the request and marshaling of the response.
+*aws/aws-lambda-go* package provides Go structs for unpacking this payload. For the request that is [APIGatewayV2HTTPRequest](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L51-L64) and the response that API Gateway expects is defined in [APIGatewayV2HTTPResponse](https://github.com/aws/aws-lambda-go/blob/main/events/apigw.go#L123-L130). We are using these two types in the signature of our [handler](handler/main.go#L27) function and *lambda* package will handle unmarshal of the request and marshaling of the response.
 
 Code in handler shows how to get request body. We need to [decode](handler/main.go#L64-L73) it from base64. 
 
@@ -180,7 +180,7 @@ Terraform configuration consists of three files:
 
 In *function.tf* we first careate IAM role and attach [AWSLambdaBasicExecutionRole](terraform/function.tf#L24) which gives function permission to upload logs to CloudWatch. Other common Lambda roles can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html). 
 
-After that we define Cloudwatch [log group](terraform/function.tf#30) for the function. The function can create a log group on its own if it doesn't exists. We create it upfront here to make it part of the terrafrom managed resources. So it will be deleted by terraform on infrastructure destroy.
+After that we define Cloudwatch [log group](terraform/function.tf#L30-L33) for the function. The function can create a log group on its own if it doesn't exists. We create it upfront here to make it part of the terrafrom managed resources. So it will be deleted by terraform on infrastructure destroy.
 
 For building [function](terraform/function.tf#L36-L48) we use deployment package which we prepared in *handler* folder. [source_code_hash](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#source_code_hash) directive will trigger function code update whenever file hash changes.
 
