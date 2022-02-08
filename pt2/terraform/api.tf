@@ -36,14 +36,6 @@ resource "aws_apigatewayv2_stage" "default" {
       status         = "$context.status"
     })
   }
-  # we need to set something for throttling, limits will be 0 by default
-  # ref: https://github.com/hashicorp/terraform-provider-aws/issues/14742
-  # using account limits for the throttling limits
-  default_route_settings {
-    detailed_metrics_enabled = true
-    throttling_burst_limit   = 5000
-    throttling_rate_limit    = 10000
-  }
 }
 
 # connect API Gateway to the Lambda function
