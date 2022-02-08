@@ -1,7 +1,5 @@
 In the first part of this guide we saw how to create simple Lambda function in Go. Here we will exapand that and make our function callable from the internet. We will integrate API Gateway  with a Lambda function on the backend. When a client calls our API, API Gateway sends the request to the Lambda function and returns the function's response to the client.
 
-There are three flawors of API Gateway. First one was REST API it still has most features, HTTP API overlaps with REST in many features. It is more 'modern' implementation. AWS [claims](https://aws.amazon.com/about-aws/whats-new/2019/12/amazon-api-gateway-offers-faster-cheaper-simpler-apis-using-http-apis-preview/) that "HTTP APIs are up to 71% cheaper compared to REST APIs". It is little simplier than REST API. In this example we will use HTTP API. The last API Gateway flawor is WebSocket which enables bidirectional clinet to backend communication. I'll save that for some future example.
-
 For running example you will need access to an aws account. If you already walk through [first part](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#readme) you are all set. If not take look into [aws credentials](https://github.com/mantil-io/go-lambda-examples/tree/master/guide#aws-credentials) chapter.
 
 <!--
@@ -172,16 +170,43 @@ At the end we show how to create [response](handler/main.go#L53) for the API Gat
 
 ## Terraform configuration
 
+Terraform configuration consists of three files:
+
+* *main.tf* defines input and output variables 
+* *function.gf* defines lambda function with the supporting resources
+* *api.tf* defines API Gateway
+
 ### function.tf
 
-*function.tf* defines lambda function with the supporting resources. We first careate IAM role and attach [AWSLambdaBasicExecutionRole](terraform/function.tf#L24) which gives function permission to upload logs to CloudWatch. Other common Lambda roles can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html). 
+In *function.tf* we first careate IAM role and attach [AWSLambdaBasicExecutionRole](terraform/function.tf#L24) which gives function permission to upload logs to CloudWatch. Other common Lambda roles can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html). 
 
 After that we define Cloudwatch [log group](terraform/function.tf#30) for the function. Function can create log group on its own if it don't exists. We create it upfront here to make it part of the terrafrom managed resources. So it will be deleted by terraform on infrastructure destroy.
 
-For building [function](terraform/function.tf#L36-L48) we use deployment package which we prepared in *handler* folder. [source_code_hash](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#source_code_hash) directive will trigger function code update whenever file hash changes.   
+For building [function](terraform/function.tf#L36-L48) we use deployment package which we prepared in *handler* folder. [source_code_hash](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#source_code_hash) directive will trigger function code update whenever file hash changes.
 
 ### api.tf
 
+Here we create an API Gateway. Then define mapping between API Gateway and our function, route on which function will be exposed. With all that in place function will be reachable on the internet. 
+
+We start with the definition of the [API Gateway resource](terraform/api.tf#L3:L9). 
+
+There are three flawors of API Gateway. First one was REST API it still has most features, HTTP API overlaps with REST in many features. It is more 'modern' implementation. AWS [claims](https://aws.amazon.com/about-aws/whats-new/2019/12/amazon-api-gateway-offers-faster-cheaper-simpler-apis-using-http-apis-preview/) that "HTTP APIs are up to 71% cheaper compared to REST APIs". It is little simplier than REST API. The last API Gateway flawor is WebSocket which enables bidirectional clinet to backend communication. I'll save that for some future example.
+
+Here we are using HTTP API Gateway. Terrafrom resource type *aws_apigatewayv2_api* will create HTTP API Gateway type if protocol_type is HTTP. The other option for *protocol_type* is WEBSOCKET for creating WebSocket API Gateway. [CORS](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-cors.html) configuration is here to enable browsers to access API while served from different domains. 
+
+[CloudWatch log group](terraform/api.tf#L3:L9) is the place where Gateway access logs will be stored. */aws/vendedlogs* is required prefix for services which are creating huge amount of [log groups](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html).
+
+API Gateway can have multiple [stages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html) with different configurations (for example dev beta prod...). Here we will use just *\$default* stage. It is reserved name for the stage which is served from the base of our API's URL. Stages and stage deployments can be powerfull concepts but reserve them for some complicated scenarios. Until than stick to the *\$default* stage and [automatic deployment](terraform/api.tf#L23).
+
+In [*access_log_settings*](terraform/api.tf#L24:L38) we are configuring where to send access logs and how they will look like.
+
+Integration resource, [*aws_apigatewayv2_integration*](terraform/api.tf#L43:L49), is the place where we connect function and API Gateway. [*aws_apigatewayv2_route*](terraform/api.tf#L53:57) sets path in HTTP request where function will be exposed. Route key "ANY /\${var.route}" when route [variable](terraform/main.tf#L16) is set to "handler" exposes function on /handler path for all types of HTPP request (GET, POST, ...).
+
+At the end we need to allow our API Gateway to [invoke function](terraform/api.tf#L61:L66). By default in AWS every resoruce is created without explicit permissions so we need to set them for each resource to resource access. 
+
+<!--
+stages... ima ih vise $default automatic deployment
+-->
 
 
 ## The path to the Mantil
