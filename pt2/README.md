@@ -194,13 +194,13 @@ There are three flavors of API Gateway. The first one was REST API it still has 
 
 Here we are using HTTP API Gateway. Terraform resource type *aws_apigatewayv2_api* will create HTTP API Gateway type if protocol_type is HTTP. The other option for *protocol_type* is WEBSOCKET for creating WebSocket API Gateway. [CORS](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-cors.html) configuration is here to enable browsers to access API while served from different domains. 
 
-[CloudWatch log group](terraform/api.tf#L3-L9) is the place where Gateway access logs will be stored. */aws/vendedlogs* is a required prefix for services that are creating a huge amount of [log groups](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html).
+[CloudWatch log group](terraform/api.tf#L13-L16) is the place where Gateway access logs will be stored. */aws/vendedlogs* is a required prefix for services that are creating a huge amount of [log groups](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html).
 
-API Gateway can have multiple [stages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html) with different configurations (for example dev beta prod...). Here we will use just *\$default* stage. It is a reserved name for the stage which is served from the base of our API's URL. Stages and stage deployments can be powerful concepts but reserve them for some complicated scenarios. Until than stick to the *\$default* stage and [automatic deployment](terraform/api.tf#L23).
+API Gateway can have multiple [stages](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-stages.html) with different configurations (for example dev beta prod...). Here we will use just *\$default* stage. It is a reserved name for the stage which is served from the base of our API's URL. Stages and stage deployments can be powerful concepts but reserve them for some complicated scenarios. Until than stick to the *\$default* stage and [automatic deployment](terraform/api.tf#L23).
 
 In [*access_log_settings*](terraform/api.tf#L24-L38) we are configuring where to send access logs and how they will look like.
 
-Integration resource, [*aws_apigatewayv2_integration*](terraform/api.tf#L43-L49), is the place where we connect function and API Gateway. [*aws_apigatewayv2_route*](terraform/api.tf#L53:57) sets path in HTTP request where function will be exposed. Route key "ANY /\${var.route}" when route [variable](terraform/main.tf#L16) is set to "handler" exposes function on /handler path for all types of HTPP request (GET, POST, ...).
+Integration resource, [*aws_apigatewayv2_integration*](terraform/api.tf#L43-L49), is the place where we connect function and API Gateway. [*aws_apigatewayv2_route*](terraform/api.tf#L53-L57) sets path in HTTP request where function will be exposed. Route key "ANY /\${var.route}" when route [variable](terraform/main.tf#L16) is set to "handler" exposes function on /handler path for all types of HTPP request (GET, POST, ...).
 
 In the end, we need to allow our API Gateway to [invoke function](terraform/api.tf#L61-L66). By default in AWS every resource is created without explicit permissions so we need to set them for each resource to resource access. 
 
