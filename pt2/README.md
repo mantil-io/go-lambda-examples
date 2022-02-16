@@ -162,7 +162,7 @@ The *aws/aws-lambda-go* package provides Go structs for unpacking this payload. 
 
 The code in the handler shows how to get the request body. But first, we need to [decode](handler/main.go#L64-L73) it from base64. 
 
-Then we show how to get information from the Lambda [environment](handler/main.go#L36). A full list of the environment variables can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime). 
+Then we show how to get information from the Lambda [environment](handler/main.go#L36). A full list of AWS Lambda environment variables can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime). 
 
 The context provided to the function has an execution [deadline](handler/main.go#L42). The function should complete before this deadline. 
 
@@ -198,7 +198,7 @@ Here we are using HTTP API Gateway. The terraform resource type *aws_apigatewayv
 
 The Gateway access logs will be stored in a [CloudWatch log group](terraform/api.tf#L13-L16). */aws/vendedlogs* is a required prefix for services that create a vast number of [log groups](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html).
 
-API Gateway can have multiple [stages](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-stages.html) with different configurations (for example, dev beta prod...). Here we will only use the *\$default* stage. It is a reserved name for the stage which is served from the base of our API's URL. Stages and stage deployments can be powerful concepts but you should reserve them for more complicated scenarios. Until then, stick to the *\$default* stage and [automatic deployment](terraform/api.tf#L23).
+API Gateway can have multiple [stages](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-stages.html) with different configurations (for example, dev beta prod...). Here we will only use the *\$default* stage. It is a reserved name for the stage which is served from the base of our API's URL. API Gateway stages and stage deployments can be powerful concepts but you should reserve them for more complicated scenarios. Until then, stick to the *\$default* stage and [automatic API Gateway deployment](terraform/api.tf#L23).
 
 In [*access_log_settings*](terraform/api.tf#L24-L38) we are configuring where to send access logs and how they will look.
 
